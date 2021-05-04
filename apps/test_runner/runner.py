@@ -96,6 +96,26 @@ class Runner:
             })
         
         return results
+        
+    def find_image( self, image_name ):
+        _image_path = os.path.normpath(self.data['save_folder'] + '/images/' + action['data'] + '.png') 
+        logging.info( 'Looking for pattern %s delay %s' % ( _image_path, action_delay ))
+        for _ in range(int(action.get('repeat', '1'))):
+            time.sleep( action_delay)
+            place = pyautogui.locateOnScreen( _image_path, confidence = _confidence,grayscale=True )  # grayscale a bit faster.
+            _my_confidence = _confidence
+            while ( place == None ) and ( _my_confidence > 0.5 ):                            
+                logging.info( ' !!!!!! Reducing confidence level for %s .  Confidence level %s '%(_image_path,_my_confidence) )
+                place = pyautogui.locateOnScreen( _image_path, confidence = _my_confidence, grayscale = False )
+                _my_confidence = _my_confidence- 0.1
+            if place == None:
+                _errmess = "Cannot locate image %s. Please check that your application is located on the primary screen.\nYour image file might also be out of date." % (_image_path)                                
+                raise NameError( _errmess )
+            else:    
+                logging.info( 'clicking image %s.  Confidence level %s. '%(_image_path,_my_confidence) )
+            return place       
+    
+        
 
     def test_case_run(self, model):
         test_result = {
@@ -110,45 +130,22 @@ class Runner:
                 image_meta = ImageJson(action['data'], self.data['save_folder'])
                 action_delay = int(action['delay']) + self.data['settings'].get("testSettings", {}).get('actionDelayOffset', 0)
             try:
+
                 if action['action'] == 'click':
-                    _image_path =  os.path.normpath(self.data['save_folder'] + '/images/' + action['data'] + '.png' ) 
-                    logging.info( 'Looking for pattern %s delay %s' % ( _image_path, action_delay ))
-                    for _ in range(int(action.get('repeat', '1'))):
-                        time.sleep( action_delay)
-                        place = pyautogui.locateOnScreen( _image_path, confidence = _confidence,grayscale=True )  # grayscale a bit faster.
-                        _my_confidence = _confidence
-                        while ( place == None ) and ( _my_confidence > 0.5 ):                            
-                            logging.info( ' !!!!!! Reducing confidence level for %s .  Confidence level %s '%(_image_path,_my_confidence) )
-                            place = pyautogui.locateOnScreen( _image_path, confidence = _my_confidence, grayscale = False )
-                            _my_confidence = _my_confidence- 0.1
-                        
-                        if place == None:
-                            _errmess = "Cannot locate image %s. Please check that your application is located on the primary screen.\nYour image file might also be out of date." % (_image_path)                                
-                            raise NameError( _errmess )
-                        else:    
-                            logging.info( 'clicking image %s.  Confidence level %s. '%(_image_path,_my_confidence) )
-                        pyautogui.click( pyautogui.center( place ) )
-                        
+                    find_image( self, image_name )
+                    pyautogui.click( pyautogui.center( place ) )
                 elif action['action'] == 'rclick':
-                    for _ in range(int(action.get('repeat', '1'))):
-                        _image_path =  os.path.normpath(self.data['save_folder'] + '/images/' + action['data'] + '.png' ) 
-                        _wait(_image_path, action_delay)
-                        place = pyautogui.locateCenterOnScreen( _image_path, confidence = _confidence )
-                        pyautogui.rightClick( place )
+                    find_image( self, image_name )
+                    pyautogui.rightClick( place )
                 elif action['action'] == 'doubleclick':
-                    for _ in range(int(action.get('repeat', '1'))):
-                        _image_path =  os.path.normpath(self.data['save_folder'] + '/images/' + action['data'] + '.png' ) 
-                        _wait(_image_path, action_delay)
-                        place = pyautogui.locateCenterOnScreen( _image_path, confidence = _confidence )
-                        pyautogui.doubleClick( place )                    
+                    find_image( self, image_name )
+                    pyautogui.doubleClick( place )                    
                 elif action['action'] == 'wait':
                     for _ in range(int(action.get('repeat', '1'))):
-                        _wait(os.path.normpath(self.data['save_folder'] + '/images/' + action['data'] + '.png'), action_delay)
+                        time.sleep(action_delay)
                 elif action['action'] == 'clickwait':
                     for _ in range(int(action.get('repeat', '1'))):
-                        _image_path =  os.path.normpath(self.data['save_folder'] + '/images/' + action['data'] + '.png' ) 
-                        _wait(_image_path, action_delay)                        
-                        place = pyautogui.locateCenterOnScreen( _image_path, confidence = _confidence )
+                        find_image( self, image_name )                    
                         pyautogui.click( place )                              
                 elif action['action'] == 'type':
                     for _ in range(int(action.get('repeat', '1'))):
